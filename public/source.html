@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>305 Workspace — Jimmy Source Book</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #f5f6fa; --surface: #fff; --border: #e4e7ed;
+      --text: #1a1d23; --text-secondary: #6b7280; --text-muted: #9ca3af;
+      --accent: #2563eb; --accent-light: #eff6ff;
+      --green: #16a34a; --green-bg: #f0fdf4; --green-border: #bbf7d0;
+      --purple: #7c3aed; --purple-bg: #f5f3ff; --purple-border: #ddd6fe;
+      --orange: #d97706; --orange-bg: #fffbeb; --orange-border: #fde68a;
+    }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* NAV */
+    nav { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; height: 52px; display: flex; align-items: center; position: sticky; top: 0; z-index: 50; }
+    .nav-brand { position: absolute; left: 50%; transform: translateX(-50%); font-size: 16px; font-weight: 700; pointer-events: none; }
+    .nav-brand span { color: var(--accent); }
+    .nav-dropdown { position: relative; margin-left: auto; }
+    .nav-menu-btn { display: flex; align-items: center; gap: 7px; font-family: inherit; font-size: 13px; font-weight: 600; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 8px 16px; cursor: pointer; }
+    .nav-menu-btn:hover { background: #eaecf2; }
+    .nav-menu-panel { display: none; position: absolute; top: calc(100% + 8px); right: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 8px 28px rgba(0,0,0,0.13); min-width: 220px; padding: 6px; z-index: 200; }
+    .nav-menu-panel.open { display: block; }
+    .nav-menu-item { display: block; font-size: 13px; font-weight: 500; padding: 9px 14px; border-radius: 8px; text-decoration: none; color: var(--text-secondary); }
+    .nav-menu-item:hover { background: var(--bg); color: var(--text); }
+    .nav-menu-item.active { background: var(--accent-light); color: var(--accent); font-weight: 600; }
+
+    /* LAYOUT */
+    .page { max-width: 1100px; margin: 0 auto; padding: 32px 24px 80px; }
+    .page-hero { margin-bottom: 36px; }
+    .page-hero-title { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 6px; }
+    .page-hero-title span { color: var(--accent); }
+    .page-hero-sub { font-size: 13px; color: var(--text-secondary); line-height: 1.6; max-width: 640px; }
+
+    /* SECTION */
+    .section { margin-bottom: 36px; }
+    .section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+
+    /* DATABASE CARDS */
+    .db-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+    .db-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; }
+    .db-card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .db-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 15px; }
+    .db-icon.ts { background: #eff6ff; }
+    .db-icon.map { background: #f0fdf4; }
+    .db-icon.wh { background: #fffbeb; }
+    .db-icon.pb { background: #f5f3ff; }
+    .db-name { font-size: 13px; font-weight: 700; color: var(--text); }
+    .db-tab { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+    .db-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 10px; }
+    .db-link { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; color: var(--accent); text-decoration: none; padding: 4px 10px; background: var(--accent-light); border-radius: 6px; }
+    .db-link:hover { background: #dbeafe; }
+
+    /* KEY COLUMNS TABLE */
+    .col-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
+    .col-table th { padding: 5px 10px; text-align: left; font-size: 10px; font-weight: 600; color: var(--text-muted); background: #f8f9fb; border-bottom: 1px solid var(--border); }
+    .col-table td { padding: 5px 10px; border-top: 1px solid #f0f1f4; vertical-align: top; }
+    .col-table td:first-child { font-family: monospace; font-size: 11px; font-weight: 600; color: var(--accent); white-space: nowrap; }
+    .col-table td:nth-child(2) { color: var(--text); font-weight: 500; }
+    .col-table td:nth-child(3) { color: var(--text-secondary); }
+
+    /* DASHBOARD CARDS */
+    .dash-list { display: flex; flex-direction: column; gap: 14px; }
+    .dash-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .dash-card-head { display: flex; align-items: center; gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--border); }
+    .dash-num { width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .dash-name { font-size: 13px; font-weight: 700; }
+    .dash-url { font-size: 11px; color: var(--text-muted); margin-top: 1px; font-family: monospace; }
+    .dash-body { padding: 14px 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .dash-section-title { font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+    .dash-sources { display: flex; flex-wrap: wrap; gap: 6px; }
+    .dash-source-tag { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 20px; }
+    .tag-ts { background: #eff6ff; color: var(--accent); border: 1px solid #bfdbfe; }
+    .tag-map { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); }
+    .tag-wh { background: var(--orange-bg); color: var(--orange); border: 1px solid var(--orange-border); }
+    .tag-pb { background: var(--purple-bg); color: var(--purple); border: 1px solid var(--purple-border); }
+    .dash-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
+    .dash-metrics { display: flex; flex-direction: column; gap: 4px; }
+    .dash-metric { font-size: 12px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; }
+    .dash-metric::before { content: '→'; color: var(--accent); font-weight: 700; flex-shrink: 0; }
+    .dash-filters { display: flex; flex-wrap: wrap; gap: 4px; }
+    .filter-pill { font-size: 10px; font-weight: 500; background: #f8f9fb; border: 1px solid var(--border); color: var(--text-secondary); padding: 2px 8px; border-radius: 20px; }
+
+    /* COLUMN MAPPING */
+    .mapping-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+    .mapping-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+    .mapping-head { padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .mapping-head .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .dot-ts { background: var(--accent); }
+    .dot-map { background: var(--green); }
+
+    /* API ENDPOINTS */
+    .endpoint-list { display: flex; flex-direction: column; gap: 10px; }
+    .endpoint { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; display: flex; align-items: flex-start; gap: 12px; }
+    .endpoint-method { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 5px; background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); flex-shrink: 0; font-family: monospace; }
+    .endpoint-path { font-family: monospace; font-size: 12px; font-weight: 600; color: var(--text); }
+    .endpoint-desc { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+    .endpoint-params { font-size: 11px; color: var(--text-muted); margin-top: 4px; font-family: monospace; }
+
+    /* ENV VARS */
+    .env-list { display: flex; flex-direction: column; gap: 8px; }
+    .env-row { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; display: grid; grid-template-columns: 200px 1fr; gap: 12px; align-items: center; }
+    .env-key { font-family: monospace; font-size: 12px; font-weight: 600; color: var(--accent); }
+    .env-desc { font-size: 12px; color: var(--text-secondary); }
+
+    @media (max-width: 768px) { .db-grid { grid-template-columns: 1fr; } .mapping-grid { grid-template-columns: 1fr; } .dash-body { grid-template-columns: 1fr; } nav { padding: 0 16px; } .nav-brand { position: static; transform: none; } }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">305 <span>Workspace</span></div>
+  <div class="nav-dropdown" id="nav-dropdown">
+    <button class="nav-menu-btn" onclick="document.getElementById('nav-panel').classList.toggle('open')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      Menu
+    </button>
+    <div class="nav-menu-panel" id="nav-panel">
+      <a class="nav-menu-item" href="/">Forecast &amp; Budget</a>
+      <a class="nav-menu-item" href="forecast-by-category.html">Forecast by Category</a>
+      <a class="nav-menu-item" href="map-overview.html">MAP Anthro Overview</a>
+      <a class="nav-menu-item active" href="source.html">Source Book</a>
+    </div>
+  </div>
+</nav>
+
+<div class="page">
+
+  <div class="page-hero">
+    <div class="page-hero-title">Jimmy <span>Source Book</span></div>
+    <div class="page-hero-sub">Complete reference for all dashboards in this project — data sources, column mappings, API endpoints, and filters. Use this page to understand where every number comes from.</div>
+  </div>
+
+  <!-- DATABASES -->
+  <div class="section">
+    <div class="section-title">Data Sources</div>
+    <div class="db-grid">
+
+      <div class="db-card">
+        <div class="db-card-head">
+          <div class="db-icon ts">📊</div>
+          <div><div class="db-name">Tradestone Database</div><div class="db-tab">Tab: TRADESTONE DATABASE</div></div>
+        </div>
+        <div class="db-desc">Main PO database synced from TradeStone PLM via Samantha. Contains all PO data, invoice records, categories, and shipping dates. Updated daily by GitHub Actions.</div>
+        <a class="db-link" href="https://docs.google.com/spreadsheets/d/1y0iL7PJldbVQmPIAnJi9wvA2hvjB8_aK2bU2kxvUf5Q/edit?gid=187073594" target="_blank">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          Open Sheet
+        </a>
+        <table class="col-table" style="margin-top:12px">
+          <thead><tr><th>Col</th><th>Name</th><th>Used for</th></tr></thead>
+          <tbody>
+            <tr><td>H (7)</td><td>Cancel Date</td><td>Monthly grouping for PO ISSUED & FORECAST</td></tr>
+            <tr><td>AJ (35)</td><td>Invoice Value</td><td>2025 INVOICED, 2026 INVOICED amounts</td></tr>
+            <tr><td>AK (36)</td><td>Invoice Date</td><td>Month grouping for invoiced columns</td></tr>
+            <tr><td>Total FOB</td><td>Total FOB / Net Amount</td><td>Wholesale value for PO ISSUED</td></tr>
+            <tr><td>Category 2</td><td>Category 2</td><td>Blouses, Bottoms, Dresses, Skirts, Swimwear…</td></tr>
+            <tr><td>Vendor Style #</td><td>Style #</td><td>Style detail tables</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="db-card">
+        <div class="db-card-head">
+          <div class="db-icon map">🗺️</div>
+          <div><div class="db-name">MAP ANTHRO 2026</div><div class="db-tab">Tab: ANTHRO MAP 2026</div></div>
+        </div>
+        <div class="db-desc">Master tracking sheet for all Anthropologie POs in 2026. Managed by the sourcing team. Contains full lifecycle data from PO issuance through invoicing, freight, and payment.</div>
+        <a class="db-link" href="https://docs.google.com/spreadsheets/d/1W88MKYr-q9g3F2fLFu2jjxvXzigK12PWohSVMsOQst4/edit" target="_blank">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          Open Sheet
+        </a>
+        <table class="col-table" style="margin-top:12px">
+          <thead><tr><th>Col</th><th>Name</th><th>Used for</th></tr></thead>
+          <tbody>
+            <tr><td>J (9)</td><td>PO WHOLESALE</td><td>2026 FORECAST monthly amounts</td></tr>
+            <tr><td>L (11)</td><td>Cancel Date</td><td>Monthly grouping for FORECAST</td></tr>
+            <tr><td>AO (40)</td><td>URBN Invoice Date</td><td>2026 INVOICED monthly grouping</td></tr>
+            <tr><td>AP (41)</td><td>URBN Invoice Total</td><td>2026 INVOICED amounts</td></tr>
+            <tr><td>A</td><td>STATUS</td><td>Filters, Next Arrivals (IN TRANSIT)</td></tr>
+            <tr><td>B</td><td>SUPPLIER</td><td>Supplier breakdown table</td></tr>
+            <tr><td>AF (31)</td><td>SUP Total Invoice</td><td>Supplier invoice cost summary</td></tr>
+            <tr><td>AZ (51)</td><td>Airfreight Cost</td><td>Freight cost summary</td></tr>
+            <tr><td>N (13)</td><td>Expected Arrival</td><td>Next Arrivals sort order</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="db-card">
+        <div class="db-card-head">
+          <div class="db-icon wh">🏭</div>
+          <div><div class="db-name">Warehouse Now Database</div><div class="db-tab">Tab: Warehouse Now Database</div></div>
+        </div>
+        <div class="db-desc">Real-time warehouse tracking database. Managed by Jhonny. Contains shipment statuses, FedEx tracking, AWB numbers, and delivery records. Updated by the Warehouse Now agent.</div>
+        <a class="db-link" href="https://docs.google.com/spreadsheets/d/1y0iL7PJldbVQmPIAnJi9wvA2hvjB8_aK2bU2kxvUf5Q/edit?gid=99866922" target="_blank">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          Open Sheet
+        </a>
+        <div class="db-desc" style="margin-top:10px;color:var(--orange)">⚠ Dashboard not yet built — planned for next phase.</div>
+      </div>
+
+      <div class="db-card">
+        <div class="db-card-head">
+          <div class="db-icon pb">⚡</div>
+          <div><div class="db-name">PowerBI Database Process</div><div class="db-tab">Tab: TRADESTONE DATABASE (synced)</div></div>
+        </div>
+        <div class="db-desc">Processed version of the Tradestone Database after Samantha's PowerBI sync runs. Adds invoice data from PO INVOICED tab, deduplicates POs, and recalculates formula row references. This is the enriched dataset used for reporting.</div>
+        <div class="db-desc" style="margin-top:10px;color:var(--purple)">Updated automatically by Samantha after all 4 extractions complete successfully.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- DASHBOARDS -->
+  <div class="section">
+    <div class="section-title">Dashboards</div>
+    <div class="dash-list">
+
+      <div class="dash-card">
+        <div class="dash-card-head">
+          <div class="dash-num">1</div>
+          <div>
+            <div class="dash-name">Forecast &amp; Budget</div>
+            <div class="dash-url">/ (index.html)</div>
+          </div>
+        </div>
+        <div class="dash-body">
+          <div>
+            <div class="dash-section-title">Data Sources</div>
+            <div class="dash-sources">
+              <span class="dash-source-tag tag-ts">Tradestone Database</span>
+              <span class="dash-source-tag tag-map">MAP ANTHRO 2026</span>
+            </div>
+            <div class="dash-desc" style="margin-top:10px">Monthly summary table comparing 2025 performance vs 2026 plan. Shows invoiced vs forecast vs PO issued for each month of the year plus a PO ISSUED category breakdown table.</div>
+          </div>
+          <div>
+            <div class="dash-section-title">Columns Shown</div>
+            <div class="dash-metrics">
+              <div class="dash-metric">2025 INVOICED — Tradestone, invoice value by invoice date</div>
+              <div class="dash-metric">2026 FORECAST — MAP, PO wholesale by cancel date</div>
+              <div class="dash-metric">2026 PO ISSUED — Tradestone, total FOB by cancel date</div>
+              <div class="dash-metric">2026 INVOICED — Tradestone, invoice value by invoice date</div>
+              <div class="dash-metric">Category breakdown — Tradestone, PO ISSUED by category</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="dash-card">
+        <div class="dash-card-head">
+          <div class="dash-num">2</div>
+          <div>
+            <div class="dash-name">Forecast by Category</div>
+            <div class="dash-url">forecast-by-category.html</div>
+          </div>
+        </div>
+        <div class="dash-body">
+          <div>
+            <div class="dash-section-title">Data Sources</div>
+            <div class="dash-sources">
+              <span class="dash-source-tag tag-ts">Tradestone Database</span>
+            </div>
+            <div class="dash-desc" style="margin-top:10px">Monthly grid showing each month's category breakdown (QTY, WHOLESALE, INVOICED). Includes a summary table, style detail list, and donut chart of invoiced amounts by category.</div>
+            <div class="dash-section-title" style="margin-top:12px">Filters</div>
+            <div class="dash-filters">
+              <span class="filter-pill">Month</span>
+              <span class="filter-pill">Brand</span>
+              <span class="filter-pill">Category</span>
+              <span class="filter-pill">Supplier</span>
+            </div>
+          </div>
+          <div>
+            <div class="dash-section-title">Columns Shown</div>
+            <div class="dash-metrics">
+              <div class="dash-metric">WHOLESALE — Total FOB by cancel date month</div>
+              <div class="dash-metric">INVOICED — Invoice value by cancel date month</div>
+              <div class="dash-metric">QTY — Total quantity per category per month</div>
+              <div class="dash-metric">Category grouping — Category 2 column</div>
+              <div class="dash-metric">Donut chart — Invoiced totals by category</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="dash-card">
+        <div class="dash-card-head">
+          <div class="dash-num">3</div>
+          <div>
+            <div class="dash-name">MAP Anthro Overview</div>
+            <div class="dash-url">map-overview.html</div>
+          </div>
+        </div>
+        <div class="dash-body">
+          <div>
+            <div class="dash-section-title">Data Sources</div>
+            <div class="dash-sources">
+              <span class="dash-source-tag tag-map">MAP ANTHRO 2026</span>
+            </div>
+            <div class="dash-desc" style="margin-top:10px">Full MAP dashboard with KPIs, Next Arrivals (IN TRANSIT POs sorted by arrival date), supplier breakdown table, and freight cost summary.</div>
+            <div class="dash-section-title" style="margin-top:12px">Filters</div>
+            <div class="dash-filters">
+              <span class="filter-pill">Month</span>
+              <span class="filter-pill">Supplier</span>
+              <span class="filter-pill">Category</span>
+              <span class="filter-pill">Status</span>
+              <span class="filter-pill">Ship Date</span>
+              <span class="filter-pill">Cancel Date</span>
+            </div>
+          </div>
+          <div>
+            <div class="dash-section-title">KPIs &amp; Tables</div>
+            <div class="dash-metrics">
+              <div class="dash-metric">Total Styles, Total POs, Units, Box Qty</div>
+              <div class="dash-metric">Total Wholesale, Total Invoiced, Chargeback</div>
+              <div class="dash-metric">Next Arrivals — IN TRANSIT, sorted by arrival date</div>
+              <div class="dash-metric">Supplier breakdown — styles, POs, qty, wholesale, invoice</div>
+              <div class="dash-metric">Freight summary — ground freight, airfreight by supplier</div>
+              <div class="dash-metric">Cost KPIs — unit avg cost, SUP invoice, freight totals</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- API ENDPOINTS -->
+  <div class="section">
+    <div class="section-title">API Endpoints</div>
+    <div class="endpoint-list">
+      <div class="endpoint">
+        <span class="endpoint-method">GET</span>
+        <div>
+          <div class="endpoint-path">/api/forecast</div>
+          <div class="endpoint-desc">Returns monthly aggregates for Forecast &amp; Budget page. Arrays of 12 values (Jan–Dec) for inv2025, forecast2026, po2026, inv2026 plus catBreakdown object.</div>
+          <div class="endpoint-params">?refresh=1 — bypass 10-min cache and re-fetch from Sheets</div>
+        </div>
+      </div>
+      <div class="endpoint">
+        <span class="endpoint-method">GET</span>
+        <div>
+          <div class="endpoint-path">/api/forecast-by-category</div>
+          <div class="endpoint-desc">Returns all Tradestone rows (style, status, supplier, brand, category, qty, wholesale, invoiced, cancelDate, invDate) plus filter option lists.</div>
+          <div class="endpoint-params">?refresh=1 — bypass cache</div>
+        </div>
+      </div>
+      <div class="endpoint">
+        <span class="endpoint-method">GET</span>
+        <div>
+          <div class="endpoint-path">/api/map-overview</div>
+          <div class="endpoint-desc">Returns all MAP ANTHRO 2026 rows with key fields (status, supplier, style, po, qty, boxQty, fob, wholesale, shipDate, cancelDate, arrival, brand, category, supInvoice, urbnTotal, airfreight, groundFreight…).</div>
+          <div class="endpoint-params">?refresh=1 — bypass cache</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ENV VARS -->
+  <div class="section">
+    <div class="section-title">Environment Variables (Render)</div>
+    <div class="env-list">
+      <div class="env-row">
+        <span class="env-key">GOOGLE_SERVICE_ACCOUNT_JSON</span>
+        <span class="env-desc">Full JSON content of the Google Service Account credentials file. Required for all Sheets reads.</span>
+      </div>
+      <div class="env-row">
+        <span class="env-key">PORT</span>
+        <span class="env-desc">Server port. Render sets this automatically — no need to configure manually.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SHEET IDs -->
+  <div class="section">
+    <div class="section-title">Spreadsheet IDs (hardcoded in server.js)</div>
+    <div class="env-list">
+      <div class="env-row">
+        <span class="env-key" style="font-size:10px">1y0iL7PJldbVQmPIAnJi9wvA2hvjB8_aK2bU2kxvUf5Q</span>
+        <span class="env-desc">Main 305 Workspace sheet — contains TRADESTONE DATABASE, Warehouse Now Database, PO DETAIL, PO TRADE, PO NEW, PO INVOICE tabs.</span>
+      </div>
+      <div class="env-row">
+        <span class="env-key" style="font-size:10px">1W88MKYr-q9g3F2fLFu2jjxvXzigK12PWohSVMsOQst4</span>
+        <span class="env-desc">MAP Spreadsheet — contains ANTHRO MAP 2026 tab with 68 columns (A–BP).</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+document.addEventListener('click', e => {
+  if (!document.getElementById('nav-dropdown').contains(e.target))
+    document.getElementById('nav-panel').classList.remove('open');
+});
+</script>
+</body>
+</html>
