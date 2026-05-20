@@ -1,0 +1,13 @@
+services:
+  - type: web_service
+    name: Jimmy
+    env: node
+    region: oregon
+    plan: starter
+    branch: main
+    buildCommand: npm ci
+    startCommand: npm start
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
