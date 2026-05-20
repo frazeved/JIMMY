@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>305 Workspace — MAP Anthro Overview</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #f5f6fa; --surface: #fff; --border: #e4e7ed;
+      --text: #1a1d23; --text-secondary: #6b7280; --text-muted: #9ca3af;
+      --accent: #2563eb; --accent-light: #eff6ff;
+      --transit: #d97706; --transit-bg: #fffbeb; --transit-border: #fde68a;
+    }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* NAV */
+    nav { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; height: 52px; display: flex; align-items: center; position: sticky; top: 0; z-index: 50; }
+    .nav-brand { position: absolute; left: 50%; transform: translateX(-50%); font-size: 16px; font-weight: 700; pointer-events: none; }
+    .nav-brand span { color: var(--accent); }
+    .nav-dropdown { position: relative; margin-left: auto; }
+    .nav-menu-btn { display: flex; align-items: center; gap: 7px; font-family: inherit; font-size: 13px; font-weight: 600; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 8px 16px; cursor: pointer; }
+    .nav-menu-btn:hover { background: #eaecf2; }
+    .nav-menu-panel { display: none; position: absolute; top: calc(100% + 8px); right: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 8px 28px rgba(0,0,0,0.13); min-width: 220px; padding: 6px; z-index: 200; }
+    .nav-menu-panel.open { display: block; }
+    .nav-menu-item { display: block; font-size: 13px; font-weight: 500; padding: 9px 14px; border-radius: 8px; text-decoration: none; color: var(--text-secondary); }
+    .nav-menu-item:hover { background: var(--bg); color: var(--text); }
+    .nav-menu-item.active { background: var(--accent-light); color: var(--accent); font-weight: 600; }
+
+    /* PAGE */
+    .page { max-width: 1500px; margin: 0 auto; padding: 24px 20px 60px; }
+
+    /* FILTERS */
+    .filters { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 22px; align-items: flex-end; }
+    .filter-group { display: flex; flex-direction: column; gap: 3px; }
+    .filter-group label { font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .filter-group select { font-family: inherit; font-size: 12px; padding: 6px 28px 6px 10px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface); color: var(--text); cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5' stroke-linecap='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; min-width: 130px; }
+    .filter-group select:focus { outline: none; border-color: var(--accent); }
+    .btn-refresh { display: flex; align-items: center; gap: 6px; font-family: inherit; font-size: 12px; font-weight: 600; color: var(--accent); background: var(--accent-light); border: 1px solid #bfdbfe; border-radius: 7px; padding: 6px 14px; cursor: pointer; }
+    .btn-refresh:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* KPI ROW */
+    .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+    .kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+    .kpi-val { font-size: 28px; font-weight: 700; color: var(--text); line-height: 1.1; }
+    .kpi-label { font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+
+    /* TOTALS ROW */
+    .totals-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+    .total-kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+    .total-kpi-val { font-size: 22px; font-weight: 700; color: var(--accent); }
+    .total-kpi-label { font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+
+    /* MID SECTION */
+    .mid-grid { display: grid; grid-template-columns: 1fr 400px; gap: 20px; margin-bottom: 20px; }
+
+    /* NEXT ARRIVALS */
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+    .card-head { padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: space-between; }
+    .card-count { font-size: 11px; font-weight: 500; color: var(--text-muted); }
+    .tbl-wrap { overflow-x: auto; max-height: 340px; overflow-y: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    thead th { padding: 6px 10px; text-align: right; font-size: 10px; font-weight: 600; color: var(--text-muted); background: #fafbfc; position: sticky; top: 0; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    thead th:first-child { text-align: left; }
+    tbody tr:hover { background: #fafbfc; }
+    tbody td { padding: 5px 10px; border-top: 1px solid #f0f1f4; text-align: right; color: var(--text-secondary); white-space: nowrap; }
+    tbody td:first-child { text-align: left; font-weight: 600; color: var(--text); }
+    .badge-transit { display: inline-block; font-size: 9px; font-weight: 600; padding: 2px 6px; border-radius: 4px; background: var(--transit-bg); color: var(--transit); border: 1px solid var(--transit-border); }
+
+    /* COST KPIs */
+    .cost-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+    .cost-head { font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+    .cost-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .cost-item { }
+    .cost-item-val { font-size: 18px; font-weight: 700; color: var(--text); }
+    .cost-item-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.4px; margin-top: 2px; }
+
+    /* BOTTOM GRID */
+    .bottom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+    /* LOADING */
+    .loading { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px; gap: 12px; color: var(--text-muted); font-size: 13px; }
+    .loader { width: 26px; height: 26px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .toast { position: fixed; bottom: 24px; right: 24px; background: var(--text); color: #fff; font-size: 13px; font-weight: 500; padding: 10px 16px; border-radius: 8px; opacity: 0; pointer-events: none; transition: all 0.2s; z-index: 100; }
+    .toast.show { opacity: 1; }
+    .toast.error { background: #dc2626; }
+
+    @media (max-width: 900px) { .kpi-row { grid-template-columns: repeat(2,1fr); } .mid-grid { grid-template-columns: 1fr; } .bottom-grid { grid-template-columns: 1fr; } nav { padding: 0 16px; } .nav-brand { position: static; transform: none; } }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">305 <span>Workspace</span></div>
+  <div class="nav-dropdown" id="nav-dropdown">
+    <button class="nav-menu-btn" onclick="document.getElementById('nav-panel').classList.toggle('open')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      Menu
+    </button>
+    <div class="nav-menu-panel" id="nav-panel">
+      <a class="nav-menu-item" href="/">Forecast &amp; Budget</a>
+      <a class="nav-menu-item" href="forecast-by-category.html">Forecast by Category</a>
+      <a class="nav-menu-item active" href="map-overview.html">MAP Anthro Overview</a>
+    </div>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="filters">
+    <div class="filter-group"><label>Month</label><select id="f-month" onchange="applyFilters()"><option value="">All</option></select></div>
+    <div class="filter-group"><label>Supplier</label><select id="f-supplier" onchange="applyFilters()"><option value="">All</option></select></div>
+    <div class="filter-group"><label>Category</label><select id="f-category" onchange="applyFilters()"><option value="">All</option></select></div>
+    <div class="filter-group"><label>Status</label><select id="f-status" onchange="applyFilters()"><option value="">All</option></select></div>
+    <div class="filter-group"><label>Ship Date</label><select id="f-shipmonth" onchange="applyFilters()"><option value="">All</option></select></div>
+    <div class="filter-group"><label>Cancel Date</label><select id="f-cancelmonth" onchange="applyFilters()"><option value="">All</option></select></div>
+    <button class="btn-refresh" id="refresh-btn" onclick="loadData(true)">↻ Refresh</button>
+  </div>
+
+  <div id="main-content">
+    <div class="loading"><div class="loader"></div>Loading…</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+document.addEventListener('click', e => {
+  if (!document.getElementById('nav-dropdown').contains(e.target))
+    document.getElementById('nav-panel').classList.remove('open');
+});
+
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+let _allRows = [];
+
+function fmt(n) { if (!n) return '$0'; return '$' + Math.round(n).toLocaleString('en-US'); }
+function fmtM(n) { if (!n) return '$0'; return '$' + (n/1e6).toFixed(1) + 'M'; }
+function fmtK(n) { if (!n) return '—'; if (Math.abs(n) >= 1000) return '$' + (n/1000).toFixed(2) + 'K'; return '$' + Math.round(n).toLocaleString('en-US'); }
+function fmtN(n) { if (!n && n !== 0) return '—'; if (n >= 1000) return (n/1000).toFixed(0) + 'K'; return n.toLocaleString(); }
+function getMonth(s) { if (!s) return null; const d = new Date(String(s).trim()); return isNaN(d.getTime()) ? null : d.getMonth(); }
+function fmtDate(s) { if (!s) return ''; const d = new Date(String(s).trim()); return isNaN(d.getTime()) ? s : d.toLocaleDateString('en-US',{month:'numeric',day:'numeric',year:'2-digit'}); }
+
+function showToast(msg, isError) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast show' + (isError ? ' error' : '');
+  setTimeout(() => t.className = 'toast', 4000);
+}
+
+function populate(id, vals) {
+  const sel = document.getElementById(id);
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">All</option>' + vals.map(v => `<option value="${v}">${v}</option>`).join('');
+  if (cur) sel.value = cur;
+}
+
+function applyFilters() {
+  const mo    = document.getElementById('f-month').value;
+  const sup   = document.getElementById('f-supplier').value;
+  const cat   = document.getElementById('f-category').value;
+  const st    = document.getElementById('f-status').value;
+  const shipMo  = document.getElementById('f-shipmonth').value;
+  const cancelMo = document.getElementById('f-cancelmonth').value;
+
+  let rows = _allRows;
+  if (mo)      rows = rows.filter(r => { const m = getMonth(r.cancelDate); return m !== null && MONTHS[m] === mo; });
+  if (sup)     rows = rows.filter(r => r.supplier === sup);
+  if (cat)     rows = rows.filter(r => r.category === cat);
+  if (st)      rows = rows.filter(r => r.status === st);
+  if (shipMo)  rows = rows.filter(r => { const m = getMonth(r.shipDate); return m !== null && MONTHS[m] === shipMo; });
+  if (cancelMo) rows = rows.filter(r => { const m = getMonth(r.cancelDate); return m !== null && MONTHS[m] === cancelMo; });
+
+  renderAll(rows);
+}
+
+function renderAll(rows) {
+  // KPIs
+  const styles    = new Set(rows.map(r => r.style).filter(Boolean));
+  const pos       = new Set(rows.map(r => r.po).filter(Boolean));
+  const totalQty  = rows.reduce((s,r) => s + (r.qty || 0), 0);
+  const totalBox  = rows.reduce((s,r) => s + (r.boxQty || 0), 0);
+  const totalWhs  = rows.reduce((s,r) => s + (r.wholesale || 0), 0);
+  const totalInv  = rows.reduce((s,r) => s + (r.urbnTotal || 0), 0);
+  const totalCB   = rows.reduce((s,r) => s + (r.chargeback || 0), 0);
+  const totalSupInv = rows.reduce((s,r) => s + (r.supInvoice || 0), 0);
+  const totalAir  = rows.reduce((s,r) => s + (r.airfreight || 0), 0);
+  const totalGround = rows.reduce((s,r) => s + (r.groundFreight || 0), 0);
+  const avgFOB    = rows.length ? (rows.reduce((s,r) => s + (r.fob||0), 0) / rows.filter(r=>r.fob).length) : 0;
+
+  // Next arrivals (IN TRANSIT, sort by arrival date)
+  const transit = rows
+    .filter(r => (r.status||'').toUpperCase().includes('TRANSIT'))
+    .sort((a,b) => new Date(a.arrival||a.shipDate||'9999') - new Date(b.arrival||b.shipDate||'9999'))
+    .slice(0, 30);
+
+  const arrivalRows = transit.map(r => `<tr>
+    <td>${r.style||'—'}</td>
+    <td><span class="badge-transit">IN TRANSIT</span></td>
+    <td>${r.supplier||''}</td>
+    <td>${fmtDate(r.arrival||r.exFactory)}</td>
+    <td>${r.category||''}</td>
+    <td>${fmt(r.wholesale)}</td>
+    <td>${r.boxQty||''}</td>
+    <td>${fmtDate(r.shipDate)}</td>
+    <td>${fmtDate(r.cancelDate)}</td>
+  </tr>`).join('');
+
+  // Supplier breakdown
+  const supMap = {};
+  for (const r of rows) {
+    const s = r.supplier || 'Unknown';
+    if (!supMap[s]) supMap[s] = { styles: new Set(), pos: new Set(), qty: 0, wholesale: 0, supQty: 0, supInvoice: 0, airfreight: 0, groundFreight: 0 };
+    if (r.style) supMap[s].styles.add(r.style);
+    if (r.po)    supMap[s].pos.add(r.po);
+    supMap[s].qty        += r.qty        || 0;
+    supMap[s].wholesale  += r.wholesale  || 0;
+    supMap[s].supQty     += r.supQty     || 0;
+    supMap[s].supInvoice += r.supInvoice || 0;
+    supMap[s].airfreight += r.airfreight || 0;
+    supMap[s].groundFreight += r.groundFreight || 0;
+  }
+  const supRows = Object.entries(supMap).sort((a,b) => b[1].wholesale - a[1].wholesale).map(([sup, v]) => `
+    <tr>
+      <td>${sup}</td>
+      <td>${v.styles.size}</td>
+      <td>${v.pos.size}</td>
+      <td>${fmtN(v.qty)}</td>
+      <td>${fmt(v.wholesale)}</td>
+      <td>${fmtN(v.supQty)}</td>
+      <td>${fmt(v.supInvoice)}</td>
+    </tr>`).join('');
+
+  const freightRows = Object.entries(supMap).sort((a,b) => b[1].wholesale - a[1].wholesale).map(([sup, v]) => `
+    <tr>
+      <td>${sup}</td>
+      <td>${v.groundFreight ? fmtK(v.groundFreight) : '—'}</td>
+      <td>${v.airfreight ? fmtK(v.airfreight) : '—'}</td>
+    </tr>`).join('');
+
+  document.getElementById('main-content').innerHTML = `
+    <div class="kpi-row">
+      <div class="kpi"><div class="kpi-val">${styles.size}</div><div class="kpi-label">Total Style #</div></div>
+      <div class="kpi"><div class="kpi-val">${pos.size}</div><div class="kpi-label">Total PO#</div></div>
+      <div class="kpi"><div class="kpi-val">${fmtN(totalQty)}</div><div class="kpi-label">Units</div></div>
+      <div class="kpi"><div class="kpi-val">${fmtN(totalBox)}</div><div class="kpi-label">Box Qty</div></div>
+    </div>
+    <div class="totals-row">
+      <div class="total-kpi"><div class="total-kpi-val">${fmtM(totalWhs)}</div><div class="total-kpi-label">Total Wholesale</div></div>
+      <div class="total-kpi"><div class="total-kpi-val">${fmtM(totalInv)}</div><div class="total-kpi-label">Total Invoiced</div></div>
+      <div class="total-kpi"><div class="total-kpi-val">${totalCB ? fmtM(totalCB) : '—'}</div><div class="total-kpi-label">Total Chargeback</div></div>
+    </div>
+    <div class="mid-grid">
+      <div class="card">
+        <div class="card-head">NEXT ARRIVALS <span class="card-count">${transit.length} in transit</span></div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>STYLE #</th><th>STATUS</th><th>SUPPLIER</th><th>ARRIVAL DATE</th><th>CATEGORY</th><th>PO</th><th>BOX</th><th>SHIP DATE</th><th>CANCEL DATE</th></tr></thead>
+            <tbody>${arrivalRows || '<tr><td colspan="9" style="text-align:center;padding:20px;color:#9ca3af">No in-transit POs</td></tr>'}</tbody>
+          </table>
+        </div>
+      </div>
+      <div class="cost-card">
+        <div class="cost-head">Cost Summary</div>
+        <div class="cost-grid">
+          <div class="cost-item"><div class="cost-item-val">${fmtN(totalQty)}</div><div class="cost-item-label">Units</div></div>
+          <div class="cost-item"><div class="cost-item-val">${avgFOB ? '$' + Math.round(avgFOB) : '—'}</div><div class="cost-item-label">Unit Cost Avg</div></div>
+          <div class="cost-item"><div class="cost-item-val">${fmtM(totalSupInv)}</div><div class="cost-item-label">SUP Invoice</div></div>
+          <div class="cost-item"><div class="cost-item-val">${totalAir ? fmtK(totalAir) : '$0'}</div><div class="cost-item-label">Airfreight</div></div>
+          <div class="cost-item"><div class="cost-item-val">${totalGround ? fmtK(totalGround) : '$0'}</div><div class="cost-item-label">Ground Freight</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="bottom-grid">
+      <div class="card">
+        <div class="card-head">Supplier Breakdown</div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>SUPPLIER</th><th>STYLES</th><th>PO#</th><th>PO QTY</th><th>WHOLESALE</th><th>SUP QTY</th><th>SUP INVOICE</th></tr></thead>
+            <tbody>${supRows}</tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head">Freight by Supplier</div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>SUPPLIER</th><th>GROUND FREIGHT</th><th>AIR COST</th></tr></thead>
+            <tbody>${freightRows}</tbody>
+          </table>
+        </div>
+      </div>
+    </div>`;
+}
+
+async function loadData(forceRefresh) {
+  const btn = document.getElementById('refresh-btn');
+  btn.disabled = true;
+  try {
+    const url = '/api/map-overview' + (forceRefresh ? '?refresh=1' : '');
+    const res  = await fetch(url);
+    if (!res.ok) throw new Error(`Server error ${res.status}`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    _allRows = data.rows;
+
+    const suppliers  = [...new Set(_allRows.map(r => r.supplier).filter(Boolean))].sort();
+    const categories = [...new Set(_allRows.map(r => r.category).filter(Boolean))].sort();
+    const statuses   = [...new Set(_allRows.map(r => r.status).filter(Boolean))].sort();
+    const shipMonths = [...new Set(_allRows.map(r => { const m = getMonth(r.shipDate); return m !== null ? MONTHS[m] : null; }).filter(Boolean))].sort((a,b) => MONTHS.indexOf(a)-MONTHS.indexOf(b));
+    const cancelMonths = [...new Set(_allRows.map(r => { const m = getMonth(r.cancelDate); return m !== null ? MONTHS[m] : null; }).filter(Boolean))].sort((a,b) => MONTHS.indexOf(a)-MONTHS.indexOf(b));
+
+    populate('f-supplier', suppliers);
+    populate('f-category', categories);
+    populate('f-status', statuses);
+    populate('f-shipmonth', shipMonths);
+    populate('f-cancelmonth', cancelMonths);
+    populate('f-month', cancelMonths);
+
+    applyFilters();
+    if (forceRefresh) showToast('Data refreshed');
+  } catch (e) {
+    document.getElementById('main-content').innerHTML = `<div class="loading" style="color:#dc2626">${e.message}</div>`;
+    showToast(e.message, true);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+loadData();
+</script>
+</body>
+</html>

@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>305 Workspace — Forecast by Category</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #f5f6fa; --surface: #fff; --border: #e4e7ed;
+      --text: #1a1d23; --text-secondary: #6b7280; --text-muted: #9ca3af;
+      --accent: #2563eb; --accent-light: #eff6ff;
+    }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* NAV */
+    nav { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; height: 52px; display: flex; align-items: center; position: sticky; top: 0; z-index: 50; }
+    .nav-brand { position: absolute; left: 50%; transform: translateX(-50%); font-size: 16px; font-weight: 700; pointer-events: none; }
+    .nav-brand span { color: var(--accent); }
+    .nav-dropdown { position: relative; margin-left: auto; }
+    .nav-menu-btn { display: flex; align-items: center; gap: 7px; font-family: inherit; font-size: 13px; font-weight: 600; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 8px 16px; cursor: pointer; }
+    .nav-menu-btn:hover { background: #eaecf2; }
+    .nav-menu-panel { display: none; position: absolute; top: calc(100% + 8px); right: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 8px 28px rgba(0,0,0,0.13); min-width: 220px; padding: 6px; z-index: 200; }
+    .nav-menu-panel.open { display: block; }
+    .nav-menu-item { display: block; font-size: 13px; font-weight: 500; padding: 9px 14px; border-radius: 8px; text-decoration: none; color: var(--text-secondary); }
+    .nav-menu-item:hover { background: var(--bg); color: var(--text); }
+    .nav-menu-item.active { background: var(--accent-light); color: var(--accent); font-weight: 600; }
+
+    /* PAGE */
+    .page { max-width: 1500px; margin: 0 auto; padding: 24px 20px 60px; }
+    .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+    .page-title { font-size: 16px; font-weight: 700; }
+    .page-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+    /* FILTERS */
+    .filters { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 22px; }
+    .filter-group { display: flex; flex-direction: column; gap: 3px; }
+    .filter-group label { font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .filter-group select { font-family: inherit; font-size: 12px; padding: 6px 28px 6px 10px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface); color: var(--text); cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5' stroke-linecap='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; min-width: 130px; }
+    .filter-group select:focus { outline: none; border-color: var(--accent); }
+    .btn-refresh { display: flex; align-items: center; gap: 6px; font-family: inherit; font-size: 12px; font-weight: 600; color: var(--accent); background: var(--accent-light); border: 1px solid #bfdbfe; border-radius: 7px; padding: 6px 14px; cursor: pointer; align-self: flex-end; }
+    .btn-refresh:hover { background: #dbeafe; }
+    .btn-refresh:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* MONTHLY GRID */
+    .month-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-bottom: 24px; }
+    .month-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+    .month-card-head { background: #f8f9fb; padding: 8px 12px; font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .month-card-head .arrow { font-size: 9px; color: var(--text-muted); }
+    .month-tbl { width: 100%; border-collapse: collapse; font-size: 11px; }
+    .month-tbl th { padding: 4px 8px; text-align: right; color: var(--text-muted); font-weight: 600; font-size: 10px; background: #fafbfc; }
+    .month-tbl th:first-child { text-align: left; }
+    .month-tbl td { padding: 4px 8px; text-align: right; border-top: 1px solid #f0f1f4; color: var(--text-secondary); }
+    .month-tbl td:first-child { text-align: left; font-weight: 500; color: var(--text); }
+    .month-tbl tr.total-row td { font-weight: 700; color: var(--text); border-top: 2px solid var(--border); background: #f8f9fb; font-size: 11px; }
+
+    /* BOTTOM SECTION */
+    .bottom-grid { display: grid; grid-template-columns: 260px 1fr 300px; gap: 20px; }
+
+    /* SUMMARY TABLE */
+    .summary-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+    .summary-head { padding: 10px 14px; border-bottom: 1px solid var(--border); }
+    .summary-head-cols { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; font-size: 10px; font-weight: 700; color: var(--text-secondary); padding: 0 14px 8px; text-align: right; }
+    .summary-head-cols span:first-child { text-align: left; }
+    .summary-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; padding: 5px 14px; font-size: 11px; border-top: 1px solid #f0f1f4; align-items: center; }
+    .summary-row .mo { font-weight: 500; color: var(--text); text-align: left; }
+    .summary-row .val { text-align: right; color: var(--text-secondary); }
+    .summary-row.total { font-weight: 700; color: var(--text); border-top: 2px solid var(--border); background: #f8f9fb; }
+    .summary-row.hl { background: #f5f7ff; }
+
+    /* STYLE TABLE */
+    .style-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+    .style-card-head { padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: 12px; font-weight: 600; }
+    .style-tbl-wrap { max-height: 420px; overflow-y: auto; }
+    .style-tbl { width: 100%; border-collapse: collapse; font-size: 11px; }
+    .style-tbl th { padding: 5px 10px; text-align: right; font-size: 10px; font-weight: 600; color: var(--text-muted); background: #fafbfc; position: sticky; top: 0; border-bottom: 1px solid var(--border); }
+    .style-tbl th:first-child { text-align: left; }
+    .style-tbl td { padding: 5px 10px; text-align: right; border-top: 1px solid #f0f1f4; color: var(--text-secondary); white-space: nowrap; }
+    .style-tbl td:first-child { text-align: left; font-weight: 600; color: var(--text); }
+
+    /* CHART CARD */
+    .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+    .chart-title { font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; text-align: center; }
+    .chart-wrap { position: relative; height: 280px; }
+
+    /* LOADING */
+    .loading { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 0; gap: 12px; color: var(--text-muted); font-size: 13px; }
+    .loader { width: 26px; height: 26px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .toast { position: fixed; bottom: 24px; right: 24px; background: var(--text); color: #fff; font-size: 13px; font-weight: 500; padding: 10px 16px; border-radius: 8px; opacity: 0; pointer-events: none; transition: all 0.2s; z-index: 100; }
+    .toast.show { opacity: 1; }
+    .toast.error { background: #dc2626; }
+
+    @media (max-width: 1200px) { .month-grid { grid-template-columns: repeat(3, 1fr); } .bottom-grid { grid-template-columns: 1fr 1fr; } .chart-card { grid-column: 1 / -1; } }
+    @media (max-width: 768px) { .month-grid { grid-template-columns: repeat(2, 1fr); } .bottom-grid { grid-template-columns: 1fr; } nav { padding: 0 16px; } .nav-brand { position: static; transform: none; } }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">305 <span>Workspace</span></div>
+  <div class="nav-dropdown" id="nav-dropdown">
+    <button class="nav-menu-btn" onclick="document.getElementById('nav-panel').classList.toggle('open')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      Menu
+    </button>
+    <div class="nav-menu-panel" id="nav-panel">
+      <a class="nav-menu-item" href="/">Forecast &amp; Budget</a>
+      <a class="nav-menu-item active" href="forecast-by-category.html">Forecast by Category</a>
+      <a class="nav-menu-item" href="map-overview.html">MAP Anthro Overview</a>
+    </div>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <div>
+      <div class="page-title">FORECAST BY CATEGORY</div>
+      <div class="page-sub" id="page-sub">Tradestone Database</div>
+    </div>
+  </div>
+
+  <!-- FILTERS -->
+  <div class="filters" id="filters-wrap">
+    <div class="filter-group">
+      <label>Month</label>
+      <select id="f-month" onchange="applyFilters()"><option value="">All</option></select>
+    </div>
+    <div class="filter-group">
+      <label>Brand</label>
+      <select id="f-brand" onchange="applyFilters()"><option value="">All</option></select>
+    </div>
+    <div class="filter-group">
+      <label>Category</label>
+      <select id="f-category" onchange="applyFilters()"><option value="">All</option></select>
+    </div>
+    <div class="filter-group">
+      <label>Supplier</label>
+      <select id="f-supplier" onchange="applyFilters()"><option value="">All</option></select>
+    </div>
+    <button class="btn-refresh" id="refresh-btn" onclick="loadData(true)">↻ Refresh</button>
+  </div>
+
+  <div id="main-content">
+    <div class="loading"><div class="loader"></div>Loading…</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+document.addEventListener('click', e => {
+  if (!document.getElementById('nav-dropdown').contains(e.target))
+    document.getElementById('nav-panel').classList.remove('open');
+});
+
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const CAT_COLORS = {
+  'Dresses':'#3b82f6','Blouses':'#1e40af','Swimwear':'#f97316',
+  'Skirts':'#ec4899','Bottoms':'#8b5cf6','Sweaters':'#14b8a6',
+  'Lounge':'#84cc16','Accessories':'#f59e0b','Other':'#9ca3af'
+};
+
+let _allRows = [];
+let _donutChart = null;
+
+function fmt(n) { if (!n) return ''; return '$' + Math.round(n).toLocaleString('en-US'); }
+function fmtK(n) { if (!n) return ''; if (n >= 1000) return '$' + (n/1000).toFixed(1) + 'K'; return '$' + Math.round(n).toLocaleString('en-US'); }
+
+function getMonthFromDate(s) {
+  if (!s) return null;
+  const d = new Date(String(s).trim());
+  return isNaN(d.getTime()) ? null : d.getMonth(); // 0-11
+}
+
+function showToast(msg, isError) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast show' + (isError ? ' error' : '');
+  setTimeout(() => t.className = 'toast', 4000);
+}
+
+function applyFilters() {
+  const mo  = document.getElementById('f-month').value;
+  const br  = document.getElementById('f-brand').value;
+  const cat = document.getElementById('f-category').value;
+  const sup = document.getElementById('f-supplier').value;
+
+  let rows = _allRows;
+  if (mo)  rows = rows.filter(r => { const m = getMonthFromDate(r.cancelDate); return m !== null && MONTHS[m] === mo; });
+  if (br)  rows = rows.filter(r => r.brand === br);
+  if (cat) rows = rows.filter(r => r.category === cat);
+  if (sup) rows = rows.filter(r => r.supplier === sup);
+
+  renderAll(rows);
+}
+
+function renderAll(rows) {
+  // Monthly breakdown
+  const monthlyCats = {}; // { monthIdx: { cat: { qty, wholesale, invoiced } } }
+  const monthlyTotals = {};
+  const catInvoiced = {};
+
+  for (const r of rows) {
+    const m = getMonthFromDate(r.cancelDate);
+    if (m === null) continue;
+    if (!monthlyCats[m]) monthlyCats[m] = {};
+    if (!monthlyTotals[m]) monthlyTotals[m] = { qty: 0, wholesale: 0, invoiced: 0 };
+    const cat = r.category || 'Other';
+    if (!monthlyCats[m][cat]) monthlyCats[m][cat] = { qty: 0, wholesale: 0, invoiced: 0 };
+    monthlyCats[m][cat].qty       += r.qty;
+    monthlyCats[m][cat].wholesale += r.wholesale;
+    monthlyCats[m][cat].invoiced  += r.invoiced;
+    monthlyTotals[m].qty          += r.qty;
+    monthlyTotals[m].wholesale    += r.wholesale;
+    monthlyTotals[m].invoiced     += r.invoiced;
+    catInvoiced[cat] = (catInvoiced[cat] || 0) + r.invoiced;
+  }
+
+  const activeMonths = Object.keys(monthlyCats).map(Number).sort((a,b) => a - b);
+
+  // Monthly grid
+  let monthHTML = '';
+  for (const m of activeMonths) {
+    const cats = Object.entries(monthlyCats[m]).sort((a,b) => b[1].wholesale - a[1].wholesale);
+    const tot  = monthlyTotals[m];
+    let rows_html = cats.map(([cat, v]) => `
+      <tr>
+        <td>${cat}</td>
+        <td>${v.qty ? v.qty.toLocaleString() : ''}</td>
+        <td>${fmtK(v.wholesale)}</td>
+        <td>${fmtK(v.invoiced)}</td>
+      </tr>`).join('');
+    monthHTML += `
+      <div class="month-card">
+        <div class="month-card-head"><span>${MONTHS[m].toUpperCase()}</span><span class="arrow">▼</span></div>
+        <table class="month-tbl">
+          <thead><tr><th></th><th>QTY</th><th>WHOLESALE</th><th>INVOICED</th></tr></thead>
+          <tbody>
+            ${rows_html}
+            <tr class="total-row">
+              <td>Total</td>
+              <td>${tot.qty ? tot.qty.toLocaleString() : ''}</td>
+              <td>${fmt(tot.wholesale)}</td>
+              <td>${fmt(tot.invoiced)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>`;
+  }
+
+  // Summary table
+  let sumRows = '';
+  let totWhs = 0, totInv = 0;
+  const HL_MONTHS = new Set([3, 4, 7]); // April, May, August — match screenshot highlights
+  for (const m of activeMonths) {
+    const t = monthlyTotals[m];
+    totWhs += t.wholesale; totInv += t.invoiced;
+    sumRows += `<div class="summary-row ${HL_MONTHS.has(m) ? 'hl' : ''}">
+      <span class="mo">${MONTHS[m]}</span>
+      <span class="val">${fmt(t.wholesale)}</span>
+      <span class="val">${fmt(t.invoiced)}</span>
+    </div>`;
+  }
+
+  // Style table
+  const topStyles = [...rows].sort((a,b) => b.wholesale - a.wholesale).slice(0, 80);
+  const styleRows = topStyles.map(r => `<tr>
+    <td>${r.style || '—'}</td>
+    <td>${r.status || ''}</td>
+    <td>${r.supplier || ''}</td>
+    <td>${r.category || ''}</td>
+    <td>${r.qty ? r.qty.toLocaleString() : ''}</td>
+    <td>${fmt(r.wholesale)}</td>
+    <td>${fmt(r.invoiced)}</td>
+  </tr>`).join('');
+
+  // Donut chart data
+  const sortedCats = Object.entries(catInvoiced).sort((a,b) => b[1]-a[1]);
+  const chartLabels = sortedCats.map(([c]) => c);
+  const chartVals   = sortedCats.map(([,v]) => v);
+  const chartColors = chartLabels.map(c => CAT_COLORS[c] || '#9ca3af');
+
+  document.getElementById('main-content').innerHTML = `
+    <div class="month-grid">${monthHTML}</div>
+    <div class="bottom-grid">
+      <div class="summary-card">
+        <div class="summary-head-cols"><span></span><span>FORECAST</span><span>INVOICED</span></div>
+        ${sumRows}
+        <div class="summary-row total">
+          <span class="mo">Total</span>
+          <span class="val">${fmt(totWhs)}</span>
+          <span class="val">${fmt(totInv)}</span>
+        </div>
+      </div>
+      <div class="style-card">
+        <div class="style-card-head">Style Detail</div>
+        <div class="style-tbl-wrap">
+          <table class="style-tbl">
+            <thead><tr><th>STYLE</th><th>STATUS</th><th>SUPPLIER</th><th>CATEGORY</th><th>QTY</th><th>WHOLESALE</th><th>INVOICED</th></tr></thead>
+            <tbody>${styleRows}</tbody>
+          </table>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">INVOICED BY CATEGORY</div>
+        <div class="chart-wrap"><canvas id="donut-chart"></canvas></div>
+      </div>
+    </div>`;
+
+  // Render donut
+  if (_donutChart) { _donutChart.destroy(); _donutChart = null; }
+  const ctx = document.getElementById('donut-chart');
+  if (ctx && chartVals.some(v => v > 0)) {
+    _donutChart = new Chart(ctx, {
+      type: 'doughnut',
+      data: { labels: chartLabels, datasets: [{ data: chartVals, backgroundColor: chartColors, borderWidth: 2, borderColor: '#fff' }] },
+      options: {
+        cutout: '60%',
+        plugins: {
+          legend: { position: 'bottom', labels: { font: { size: 11, family: 'Inter' }, padding: 10, boxWidth: 12 } },
+          tooltip: {
+            callbacks: {
+              label: ctx => {
+                const total = ctx.dataset.data.reduce((s,v) => s+v, 0);
+                const pct = total ? Math.round(ctx.parsed / total * 100) : 0;
+                return ` ${ctx.label}: $${(ctx.parsed/1e6).toFixed(1)}M (${pct}%)`;
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  const totInvM = (totInv / 1e6).toFixed(1);
+  document.getElementById('page-sub').textContent = `Tradestone Database · ${activeMonths.length} months · $${totInvM}M invoiced`;
+}
+
+async function loadData(forceRefresh) {
+  const btn = document.getElementById('refresh-btn');
+  btn.disabled = true;
+  try {
+    const url = '/api/forecast-by-category' + (forceRefresh ? '?refresh=1' : '');
+    const res  = await fetch(url);
+    if (!res.ok) throw new Error(`Server error ${res.status}`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    _allRows = data.rows;
+
+    // Populate filter dropdowns
+    const populate = (id, vals) => {
+      const sel = document.getElementById(id);
+      const cur = sel.value;
+      sel.innerHTML = '<option value="">All</option>' + vals.map(v => `<option value="${v}">${v}</option>`).join('');
+      if (cur) sel.value = cur;
+    };
+    populate('f-brand',    data.filters.brands);
+    populate('f-category', data.filters.categories);
+    populate('f-supplier', data.filters.suppliers);
+
+    // Month filter from cancel dates
+    const months = [...new Set(_allRows.map(r => {
+      const m = getMonthFromDate(r.cancelDate);
+      return m !== null ? MONTHS[m] : null;
+    }).filter(Boolean))].sort((a,b) => MONTHS.indexOf(a) - MONTHS.indexOf(b));
+    populate('f-month', months);
+
+    applyFilters();
+    if (forceRefresh) showToast('Data refreshed');
+  } catch (e) {
+    document.getElementById('main-content').innerHTML = `<div class="loading" style="color:#dc2626">${e.message}</div>`;
+    showToast(e.message, true);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+loadData();
+</script>
+</body>
+</html>

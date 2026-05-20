@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>305 Workspace — Jimmy</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #f5f6fa; --surface: #fff; --border: #e4e7ed;
+      --text: #1a1d23; --text-secondary: #6b7280; --text-muted: #9ca3af;
+      --accent: #2563eb; --accent-light: #eff6ff; --accent-hover: #1d4ed8;
+      --cell-blue: #dbeafe; --cell-blue-text: #1e40af;
+      --header-blue: #2563eb; --header-blue-text: #fff;
+    }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* NAV */
+    nav {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 0 24px; height: 52px; display: flex; align-items: center; position: sticky; top: 0; z-index: 50;
+    }
+    .nav-brand { position: absolute; left: 50%; transform: translateX(-50%); font-size: 16px; font-weight: 700; pointer-events: none; }
+    .nav-brand span { color: var(--accent); }
+    .nav-dropdown { position: relative; margin-left: auto; }
+    .nav-menu-btn {
+      display: flex; align-items: center; gap: 7px; font-family: inherit; font-size: 13px; font-weight: 600;
+      color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+      padding: 8px 16px; cursor: pointer; transition: background 0.15s;
+    }
+    .nav-menu-btn:hover { background: #eaecf2; }
+    .nav-menu-panel {
+      display: none; position: absolute; top: calc(100% + 8px); right: 0;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+      box-shadow: 0 8px 28px rgba(0,0,0,0.13); min-width: 200px; padding: 6px; z-index: 200;
+    }
+    .nav-menu-panel.open { display: block; }
+    .nav-menu-item {
+      display: block; font-size: 13px; font-weight: 500; padding: 9px 14px; border-radius: 8px;
+      text-decoration: none; color: var(--text-secondary); transition: background 0.15s;
+    }
+    .nav-menu-item:hover { background: var(--bg); color: var(--text); }
+    .nav-menu-item.active { background: var(--accent-light); color: var(--accent); font-weight: 600; }
+
+    /* LAYOUT */
+    .layout { display: flex; gap: 24px; max-width: 1400px; margin: 0 auto; padding: 28px 24px 60px; align-items: flex-start; }
+
+    /* SIDEBAR */
+    .sidebar { width: 220px; flex-shrink: 0; position: sticky; top: 68px; }
+    .sidebar-agent { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px 16px; text-align: center; }
+    .avatar-wrap { width: 100px; height: 100px; border-radius: 50%; overflow: hidden; margin: 0 auto 14px; box-shadow: 0 0 0 4px var(--accent-light), 0 0 0 7px #bfdbfe; background: #e0e7ff; display: flex; align-items: center; justify-content: center; }
+    .avatar-initials { font-size: 32px; font-weight: 700; color: var(--accent); }
+    .sb-label { font-size: 10px; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px; }
+    .sb-name { font-size: 18px; font-weight: 700; margin-bottom: 3px; }
+    .sb-title { font-size: 11px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 10px; }
+    .sb-desc { font-size: 11px; color: var(--text-muted); line-height: 1.6; text-align: left; margin-bottom: 12px; }
+    .sb-tags { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; }
+    .sb-tag { font-size: 10px; font-weight: 500; background: var(--bg); border: 1px solid var(--border); color: var(--text-secondary); padding: 2px 8px; border-radius: 20px; }
+
+    /* CONTENT */
+    .content { flex: 1; min-width: 0; }
+    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .section-title { font-size: 13px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.6px; }
+
+    /* CARD */
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 22px 24px; }
+    .card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+    .card-title { font-size: 14px; font-weight: 700; color: var(--text); letter-spacing: 0.3px; }
+    .card-subtitle { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .btn-refresh {
+      display: flex; align-items: center; gap: 6px; font-family: inherit; font-size: 12px; font-weight: 600;
+      color: var(--accent); background: var(--accent-light); border: 1px solid #bfdbfe; border-radius: 7px;
+      padding: 6px 12px; cursor: pointer; transition: background 0.15s;
+    }
+    .btn-refresh:hover { background: #dbeafe; }
+    .btn-refresh:disabled { opacity: 0.5; cursor: not-allowed; }
+    .spin { animation: spin 0.7s linear infinite; display: none; }
+    .btn-refresh.loading .spin { display: inline; }
+    .btn-refresh.loading .lbl { display: none; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* DIVIDER */
+    .card-divider { height: 1px; background: var(--border); margin: 22px 0; }
+    .sub-title { font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 12px; }
+
+    /* TABLES */
+    .tbl-wrap { overflow-x: auto; }
+    table { border-collapse: collapse; width: 100%; font-size: 12px; }
+    th, td { padding: 7px 12px; white-space: nowrap; }
+    thead th { background: #f8f9fb; border-bottom: 2px solid var(--border); font-weight: 600; font-size: 11px; color: var(--text-secondary); text-align: right; }
+    thead th:first-child { text-align: left; }
+    tbody tr:hover { background: #fafbfc; }
+    tbody td { border-bottom: 1px solid #f0f1f4; text-align: right; color: var(--text-secondary); }
+    tbody td:first-child { text-align: left; font-weight: 500; color: var(--text); }
+    tbody tr.total-row td { font-weight: 700; color: var(--text); border-top: 2px solid var(--border); border-bottom: none; background: #f8f9fb; }
+
+    /* 2026 column headers — blue */
+    th.h26 { color: var(--accent); }
+    th.h25 { color: var(--text); }
+
+    /* Blue highlight for cells with 2026 data */
+    td.cell-blue { background: var(--cell-blue); color: var(--cell-blue-text); font-weight: 600; }
+    td.cell-blue-po { background: #dbeafe; color: #1e40af; font-weight: 600; }
+
+    /* Summary table month column */
+    .month-col { min-width: 90px; }
+
+    /* Loading / error states */
+    .state-loading, .state-error { text-align: center; padding: 40px 0; color: var(--text-muted); font-size: 13px; }
+    .state-error { color: #dc2626; }
+    .loader { width: 24px; height: 24px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; margin: 0 auto 10px; }
+
+    /* Toast */
+    .toast { position: fixed; bottom: 24px; right: 24px; background: var(--text); color: #fff; font-size: 13px; font-weight: 500; padding: 10px 16px; border-radius: 8px; opacity: 0; transform: translateY(8px); transition: all 0.2s; pointer-events: none; z-index: 100; }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.error { background: #dc2626; }
+
+    @media (max-width: 768px) {
+      .layout { flex-direction: column; padding: 16px; }
+      .sidebar { width: 100%; position: static; }
+      nav { padding: 0 16px; }
+      .nav-brand { position: static; transform: none; font-size: 14px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">305 <span>Workspace</span></div>
+  <div class="nav-dropdown" id="nav-dropdown">
+    <button class="nav-menu-btn" onclick="document.getElementById('nav-panel').classList.toggle('open')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      Menu
+    </button>
+    <div class="nav-menu-panel" id="nav-panel">
+      <a class="nav-menu-item active" href="/">Forecast &amp; Budget</a>
+      <a class="nav-menu-item" href="forecast-by-category.html">Forecast by Category</a>
+      <a class="nav-menu-item" href="map-overview.html">MAP Anthro Overview</a>
+    </div>
+  </div>
+</nav>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-agent">
+      <div class="avatar-wrap"><div class="avatar-initials">JM</div></div>
+      <div class="sb-label">AI Agent</div>
+      <div class="sb-name">Jimmy</div>
+      <div class="sb-title">Business Intelligence<br>Analytics Dashboard</div>
+      <div class="sb-desc">Jimmy connects your core databases — Tradestone, MAP, and Warehouse — into unified dashboards for forecasting, budget tracking, and performance analysis.</div>
+      <div class="sb-tags">
+        <span class="sb-tag">Tradestone</span>
+        <span class="sb-tag">MAP 2026</span>
+        <span class="sb-tag">Warehouse</span>
+        <span class="sb-tag">Analytics</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- CONTENT -->
+  <div class="content">
+    <div class="section-header">
+      <div class="section-title">Dashboards</div>
+    </div>
+
+    <!-- FORECAST & BUDGET CARD -->
+    <div class="card" id="fb-card">
+      <div class="card-head">
+        <div>
+          <div class="card-title">FORECAST &amp; BUDGET</div>
+          <div class="card-subtitle" id="fb-subtitle">Loading data…</div>
+        </div>
+        <button class="btn-refresh" id="refresh-btn" onclick="loadData(true)">
+          <svg class="spin" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.22-8.56"/></svg>
+          <span class="lbl">↻ Refresh</span>
+        </button>
+      </div>
+
+      <div id="fb-body">
+        <div class="state-loading"><div class="loader"></div>Loading…</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+document.addEventListener('click', e => {
+  if (!document.getElementById('nav-dropdown').contains(e.target))
+    document.getElementById('nav-panel').classList.remove('open');
+});
+
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function fmt(n) {
+  if (!n) return '';
+  return '$' + Math.round(n).toLocaleString('en-US');
+}
+
+function showToast(msg, isError) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isError ? ' error' : '');
+  setTimeout(() => t.className = 'toast', 4000);
+}
+
+function buildSummaryTable(data) {
+  const { inv2025, forecast2026, po2026, inv2026 } = data;
+
+  // Find last month with any data
+  let lastMonth = 0;
+  for (let m = 11; m >= 0; m--) {
+    if (inv2025[m] || forecast2026[m] || po2026[m] || inv2026[m]) { lastMonth = m; break; }
+  }
+
+  const totInv25 = inv2025.reduce((s,v) => s+v, 0);
+  const totFc26  = forecast2026.reduce((s,v) => s+v, 0);
+  const totPO26  = po2026.reduce((s,v) => s+v, 0);
+  const totInv26 = inv2026.reduce((s,v) => s+v, 0);
+
+  let rows = '';
+  for (let m = 0; m <= Math.max(lastMonth, 11); m++) {
+    const isBlue25  = inv2025[m] > 0;
+    const isBlue26f = forecast2026[m] > 0;
+    const isBlueP   = po2026[m] > 0;
+    const isBlueI   = inv2026[m] > 0;
+    rows += `<tr>
+      <td class="month-col">${MONTHS[m]}</td>
+      <td>${isBlue25  ? fmt(inv2025[m])      : ''}</td>
+      <td class="${isBlue26f ? 'cell-blue' : ''}">${isBlue26f ? fmt(forecast2026[m]) : ''}</td>
+      <td class="${isBlueP   ? 'cell-blue' : ''}">${isBlueP   ? fmt(po2026[m])       : ''}</td>
+      <td class="${isBlueI   ? 'cell-blue' : ''}">${isBlueI   ? fmt(inv2026[m])      : ''}</td>
+    </tr>`;
+  }
+
+  return `
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th class="month-col">MONTH</th>
+            <th class="h25">2025 INVOICED</th>
+            <th class="h26">2026 FORECAST</th>
+            <th class="h26">2026 PO ISSUED</th>
+            <th class="h26">2026 INVOICED</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows}
+          <tr class="total-row">
+            <td>Total</td>
+            <td>${fmt(totInv25)}</td>
+            <td>${fmt(totFc26)}</td>
+            <td>${fmt(totPO26)}</td>
+            <td>${fmt(totInv26)}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>`;
+}
+
+function buildCategoryTable(data) {
+  const { catBreakdown, po2026 } = data;
+
+  // Find active months (any PO ISSUED data)
+  const activeMo = [];
+  for (let m = 0; m < 12; m++) {
+    if (po2026[m] > 0) activeMo.push(m);
+  }
+  if (!activeMo.length) return '';
+
+  // Sort categories
+  const catOrder = ['Accessories','Blouses','Bottoms','Dresses','Skirts','Sweaters','Swimwear'];
+  const cats = Object.keys(catBreakdown).sort((a, b) => {
+    const ai = catOrder.indexOf(a), bi = catOrder.indexOf(b);
+    if (ai >= 0 && bi >= 0) return ai - bi;
+    if (ai >= 0) return -1;
+    if (bi >= 0) return 1;
+    return a.localeCompare(b);
+  });
+
+  const moHeaders = activeMo.map(m => `<th class="h26">${MONTHS_SHORT[m]}</th>`).join('');
+
+  let rows = '';
+  for (const cat of cats) {
+    const vals = catBreakdown[cat] || new Array(12).fill(0);
+    const total = activeMo.reduce((s, m) => s + (vals[m] || 0), 0);
+    if (!total) continue;
+    const cells = activeMo.map(m => `<td class="${vals[m] > 0 ? 'cell-blue-po' : ''}">${vals[m] > 0 ? fmt(vals[m]) : ''}</td>`).join('');
+    rows += `<tr><td>${cat}</td>${cells}<td class="cell-blue-po">${fmt(total)}</td></tr>`;
+  }
+
+  // Total row
+  const totCells = activeMo.map(m => `<td>${fmt(po2026[m])}</td>`).join('');
+  const grandTotal = activeMo.reduce((s, m) => s + po2026[m], 0);
+
+  return `
+    <div class="card-divider"></div>
+    <div class="sub-title">PO ISSUED BY CATEGORY — 2026 (Tradestone Database)</div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="text-align:left">PO ISSUED</th>
+            ${moHeaders}
+            <th class="h26">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows}
+          <tr class="total-row">
+            <td>Total</td>${totCells}<td>${fmt(grandTotal)}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>`;
+}
+
+async function loadData(forceRefresh) {
+  const btn = document.getElementById('refresh-btn');
+  btn.disabled = true;
+  btn.classList.add('loading');
+
+  try {
+    const url = '/api/forecast' + (forceRefresh ? '?refresh=1' : '');
+    const res  = await fetch(url);
+    if (!res.ok) throw new Error(`Server error ${res.status}`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    const totInv25 = data.inv2025.reduce((s,v) => s+v, 0);
+    const totPO26  = data.po2026.reduce((s,v) => s+v, 0);
+    document.getElementById('fb-subtitle').textContent =
+      `2025 Invoiced ${fmt(totInv25)} · 2026 PO Issued ${fmt(totPO26)}`;
+
+    document.getElementById('fb-body').innerHTML =
+      buildSummaryTable(data) + buildCategoryTable(data);
+
+    if (forceRefresh) showToast('Data refreshed');
+  } catch (e) {
+    document.getElementById('fb-body').innerHTML =
+      `<div class="state-error">Failed to load: ${e.message}</div>`;
+    showToast(e.message, true);
+  } finally {
+    btn.disabled = false;
+    btn.classList.remove('loading');
+  }
+}
+
+loadData();
+</script>
+</body>
+</html>
