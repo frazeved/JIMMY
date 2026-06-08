@@ -106,6 +106,15 @@
     /* Summary table month column */
     .month-col { min-width: 90px; }
 
+    /* Horizontal forecast table header */
+    .forecast-h-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .btn-xls {
+      display: flex; align-items: center; gap: 5px; font-family: inherit; font-size: 12px; font-weight: 600;
+      color: var(--accent); background: var(--accent-light); border: 1px solid #bfdbfe; border-radius: 7px;
+      padding: 5px 12px; cursor: pointer; transition: background 0.15s;
+    }
+    .btn-xls:hover { background: #dbeafe; }
+
     /* Loading / error states */
     .state-loading, .state-error { text-align: center; padding: 40px 0; color: var(--text-muted); font-size: 13px; }
     .state-error { color: #dc2626; }
@@ -208,6 +217,72 @@ function showToast(msg, isError) {
   t.textContent = msg;
   t.className = 'toast show' + (isError ? ' error' : '');
   setTimeout(() => t.className = 'toast', 4000);
+}
+
+function buildForecastHorizontalTable(data) {
+  const { forecast2026, inv2025 } = data;
+
+  const tot26 = forecast2026.reduce((s,v) => s+v, 0);
+  const tot25 = inv2025.reduce((s,v) => s+v, 0);
+
+  const headers = MONTHS_SHORT.map(m => `<th class="h26">${m.toUpperCase()}</th>`).join('');
+  const cells26 = forecast2026.map(v => `<td class="${v > 0 ? 'cell-blue' : ''}">${fmt(v)}</td>`).join('');
+  const cells25 = inv2025.map(v => `<td>${fmt(v)}</td>`).join('');
+
+  return `
+    <div class="forecast-h-head">
+      <div class="sub-title" style="margin-bottom:0">FORECAST — EXPECTED WHOLESALE BY MONTH</div>
+      <button class="btn-xls" onclick="exportForecastXLS()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+        XLS
+      </button>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="text-align:left;min-width:120px">FORECAST</th>
+            ${headers}
+            <th>TOTAL</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="font-weight:600;color:var(--text)">2026</td>
+            ${cells26}
+            <td class="cell-blue" style="font-weight:700">${fmt(tot26)}</td>
+          </tr>
+          <tr>
+            <td style="font-weight:600;color:var(--text)">2025 INVOICED</td>
+            ${cells25}
+            <td style="font-weight:700">${fmt(tot25)}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card-divider"></div>`;
+}
+
+function exportForecastXLS() {
+  const d = window._fData;
+  if (!d) return;
+  const { forecast2026, inv2025 } = d;
+  const headers = ['FORECAST', ...MONTHS_SHORT.map(m => m.toUpperCase()), 'TOTAL'];
+  const tot26 = forecast2026.reduce((s,v) => s+v, 0);
+  const tot25 = inv2025.reduce((s,v) => s+v, 0);
+  const rows = [
+    headers,
+    ['2026', ...forecast2026, tot26],
+    ['2025 INVOICED', ...inv2025, tot25],
+  ];
+  const csv = rows.map(r => r.map(v => typeof v === 'number' ? v : `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'forecast-wholesale-by-month.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 }
 
 function buildSummaryTable(data) {
@@ -334,13 +409,15 @@ async function loadData(forceRefresh) {
     const data = await res.json();
     if (data.error) throw new Error(data.error);
 
+    window._fData = data;
+
     const totInv25 = data.inv2025.reduce((s,v) => s+v, 0);
     const totPO26  = data.po2026.reduce((s,v) => s+v, 0);
     document.getElementById('fb-subtitle').textContent =
       `2025 Invoiced ${fmt(totInv25)} · 2026 PO Issued ${fmt(totPO26)}`;
 
     document.getElementById('fb-body').innerHTML =
-      buildSummaryTable(data) + buildCategoryTable(data);
+      buildForecastHorizontalTable(data) + buildSummaryTable(data) + buildCategoryTable(data);
 
     if (forceRefresh) showToast('Data refreshed');
   } catch (e) {
