@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>305 Workspace — Profit &amp; Margin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #f5f6fa; --surface: #fff; --border: #e4e7ed;
+      --text: #1a1d23; --text-secondary: #6b7280; --text-muted: #9ca3af;
+      --accent: #2563eb; --accent-light: #eff6ff;
+      --green: #059669; --green-bg: #f0fdf4; --green-border: #bbf7d0;
+      --red: #dc2626; --red-bg: #fef2f2; --red-border: #fecaca;
+    }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    nav { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; height: 52px; display: flex; align-items: center; position: sticky; top: 0; z-index: 50; }
+    .nav-brand { position: absolute; left: 50%; transform: translateX(-50%); font-size: 16px; font-weight: 700; pointer-events: none; }
+    .nav-brand span { color: var(--accent); }
+    .nav-dropdown { position: relative; margin-left: auto; }
+    .nav-menu-btn { display: flex; align-items: center; gap: 7px; font-family: inherit; font-size: 13px; font-weight: 600; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 8px 16px; cursor: pointer; }
+    .nav-menu-btn:hover { background: #eaecf2; }
+    .nav-menu-panel { display: none; position: absolute; top: calc(100% + 8px); right: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 8px 28px rgba(0,0,0,0.13); min-width: 220px; padding: 6px; z-index: 200; }
+    .nav-menu-panel.open { display: block; }
+    .nav-menu-item { display: block; font-size: 13px; font-weight: 500; padding: 9px 14px; border-radius: 8px; text-decoration: none; color: var(--text-secondary); }
+    .nav-menu-item:hover { background: var(--bg); color: var(--text); }
+    .nav-menu-item.active { background: var(--accent-light); color: var(--accent); font-weight: 600; }
+
+    .page { max-width: 1600px; margin: 0 auto; padding: 24px 20px 60px; }
+
+    .filters { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 22px; align-items: flex-end; }
+    .filter-group { display: flex; flex-direction: column; gap: 3px; }
+    .filter-group label { font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .filter-group select { font-family: inherit; font-size: 12px; padding: 6px 28px 6px 10px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface); color: var(--text); cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5' stroke-linecap='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; min-width: 150px; }
+    .filter-group select:focus { outline: none; border-color: var(--accent); }
+    .btn-refresh { display: flex; align-items: center; gap: 6px; font-family: inherit; font-size: 12px; font-weight: 600; color: var(--accent); background: var(--accent-light); border: 1px solid #bfdbfe; border-radius: 7px; padding: 6px 14px; cursor: pointer; }
+    .btn-refresh:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+    .kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+    .kpi-val { font-size: 26px; font-weight: 700; color: var(--text); line-height: 1.1; }
+    .kpi-val.green { color: var(--green); }
+    .kpi-val.red { color: var(--red); }
+    .kpi-label { font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+    .card-head { padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: space-between; }
+    .card-count { font-size: 11px; font-weight: 500; color: var(--text-muted); }
+    .tbl-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    thead th { padding: 7px 10px; text-align: right; font-size: 10px; font-weight: 600; color: var(--text-muted); background: #fafbfc; position: sticky; top: 0; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    thead th:first-child { text-align: left; padding-left: 14px; }
+    thead th:nth-child(2) { text-align: left; }
+
+    .tr-awb { cursor: pointer; background: #f8f9fb; }
+    .tr-awb:hover { background: #eef0f6; }
+    .tr-awb td { padding: 7px 10px; border-top: 1px solid var(--border); font-weight: 600; color: var(--text); white-space: nowrap; text-align: right; }
+    .tr-awb td:first-child { padding-left: 14px; text-align: left; }
+    .tr-awb td:nth-child(2) { text-align: left; }
+    .chevron { display: inline-block; transition: transform 0.15s; margin-right: 5px; font-size: 9px; color: var(--text-muted); }
+    .tr-awb.expanded .chevron { transform: rotate(90deg); }
+
+    .tr-style { display: none; }
+    .tr-style.visible { display: table-row; }
+    .tr-style td { padding: 5px 10px; border-top: 1px solid #f0f1f4; color: var(--text-secondary); white-space: nowrap; text-align: right; }
+    .tr-style td:first-child { padding-left: 30px; text-align: left; color: var(--text); font-weight: 500; }
+    .tr-style td:nth-child(2) { text-align: left; }
+    .tr-style:hover td { background: #fafbfc; }
+
+    .tr-total td { padding: 8px 10px; border-top: 2px solid var(--border); font-weight: 700; color: var(--text); white-space: nowrap; background: #f8f9fb; text-align: right; }
+    .tr-total td:first-child { padding-left: 14px; text-align: left; }
+    .tr-total td:nth-child(2) { text-align: left; }
+
+    .profit-pos { color: var(--green); }
+    .profit-neg { color: var(--red); }
+    .badge { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; }
+    .badge-good { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); }
+    .badge-ok   { background: #fffbeb; color: #d97706; border: 1px solid #fde68a; }
+    .badge-bad  { background: var(--red-bg); color: var(--red); border: 1px solid var(--red-border); }
+    .awb-link { color: var(--accent); text-decoration: none; font-size: 10px; margin-left: 6px; }
+    .awb-link:hover { text-decoration: underline; }
+    .loading { text-align: center; padding: 40px; color: var(--text-muted); font-size: 13px; }
+
+    @media (max-width: 640px) {
+      nav { padding: 0 14px; }
+      .page { padding: 14px 12px 40px; }
+      .kpi-row { grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+      .kpi-val { font-size: 20px; }
+      .filters { gap: 8px; }
+      .filter-group select { min-width: 120px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">305 <span>Workspace</span></div>
+  <div class="nav-dropdown">
+    <button class="nav-menu-btn" id="nav-btn">
+      Profit &amp; Margin
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+    </button>
+    <div class="nav-menu-panel" id="nav-panel">
+      <a class="nav-menu-item" href="/">Forecast &amp; Budget</a>
+      <a class="nav-menu-item" href="forecast-by-category.html">Forecast by Category</a>
+      <a class="nav-menu-item" href="map-overview.html">MAP Anthro Overview</a>
+      <a class="nav-menu-item active" href="profit-margin.html">Profit &amp; Margin</a>
+      <a class="nav-menu-item" href="source.html">Source Book</a>
+    </div>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="filters">
+    <div class="filter-group">
+      <label>Month</label>
+      <select id="f-month"><option value="">All Months</option></select>
+    </div>
+    <button class="btn-refresh" id="btn-refresh">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+      Refresh
+    </button>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-val" id="kpi-urbn">—</div><div class="kpi-label">Total URBN Invoice</div></div>
+    <div class="kpi"><div class="kpi-val" id="kpi-costs">—</div><div class="kpi-label">Total Costs</div></div>
+    <div class="kpi"><div class="kpi-val" id="kpi-profit">—</div><div class="kpi-label">Total Profit</div></div>
+    <div class="kpi"><div class="kpi-val" id="kpi-margin">—</div><div class="kpi-label">Avg Profit Margin</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <span>AWB Breakdown</span>
+      <span class="card-count" id="awb-count"></span>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>MAWB / HAWB</th>
+            <th>SUPPLIER</th>
+            <th>SUP QTY</th>
+            <th>SUP TOTAL</th>
+            <th>ANTHRO QTY</th>
+            <th>URBN INVOICE</th>
+            <th>AIRFREIGHT</th>
+            <th>CUSTOM ENTRY</th>
+            <th>GROUND FREIGHT</th>
+            <th>FOB COMM</th>
+            <th>CHARGEBACK</th>
+            <th>TOTAL COSTS</th>
+            <th>PROFIT</th>
+            <th>MARGIN %</th>
+          </tr>
+        </thead>
+        <tbody id="tbl-body">
+          <tr><td colspan="14" class="loading">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  let allRows = [];
+
+  const $el = id => document.getElementById(id);
+
+  function fmt$(n) { return (n || n === 0) ? '$' + Math.round(n).toLocaleString() : '—'; }
+  function fmtN(n) { return n ? Math.round(n).toLocaleString() : '—'; }
+
+  function badge(pct) {
+    if (!pct && pct !== 0) return '—';
+    const cls = pct >= 40 ? 'badge-good' : pct >= 25 ? 'badge-ok' : 'badge-bad';
+    return `<span class="badge ${cls}">${Math.round(pct)}%</span>`;
+  }
+
+  function parseMonth(v) {
+    if (!v) return null;
+    const d = new Date(String(v).trim());
+    if (isNaN(d.getTime())) return null;
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  }
+
+  function monthLabel(ym) {
+    const [y, m] = ym.split('-');
+    const names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return `${names[+m - 1]} ${y}`;
+  }
+
+  function populateMonths() {
+    const seen = new Set();
+    allRows.forEach(r => { const m = parseMonth(r.urbnDate); if (m) seen.add(m); });
+    const sel = $el('f-month');
+    [...seen].sort().forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m;
+      opt.textContent = monthLabel(m);
+      sel.appendChild(opt);
+    });
+  }
+
+  function render() {
+    const month = $el('f-month').value;
+    const rows = month ? allRows.filter(r => parseMonth(r.urbnDate) === month) : allRows;
+
+    const tUrbn   = rows.reduce((s, r) => s + r.urbnTotal, 0);
+    const tCosts  = rows.reduce((s, r) => s + r.totalCosts, 0);
+    const tProfit = rows.reduce((s, r) => s + r.profit, 0);
+    const margin  = tUrbn > 0 ? (tProfit / tUrbn * 100) : 0;
+
+    $el('kpi-urbn').textContent   = fmt$(tUrbn);
+    $el('kpi-costs').textContent  = fmt$(tCosts);
+    $el('kpi-profit').textContent = fmt$(tProfit);
+    $el('kpi-margin').textContent = Math.round(margin) + '%';
+    $el('kpi-profit').className   = 'kpi-val ' + (tProfit >= 0 ? 'green' : 'red');
+
+    const groups = new Map();
+    rows.forEach(r => {
+      const k = r.awb || '(No AWB)';
+      if (!groups.has(k)) groups.set(k, {
+        awb: k, awbFolder: r.awbFolder, supplier: r.supplier, rows: [],
+        supQty: 0, supTotal: 0, anthroQty: 0, urbnTotal: 0,
+        airfreight: 0, customEntry: 0, groundFreight: 0, fobCommission: 0,
+        chargeback: 0, totalCosts: 0, profit: 0
+      });
+      const g = groups.get(k);
+      g.rows.push(r);
+      g.supQty        += r.supQty;
+      g.supTotal      += r.supTotal;
+      g.anthroQty     += r.anthroQty;
+      g.urbnTotal     += r.urbnTotal;
+      g.airfreight    += r.airfreight;
+      g.customEntry   += r.customEntry;
+      g.groundFreight += r.groundFreight;
+      g.fobCommission += r.fobCommission;
+      g.chargeback    += r.chargeback;
+      g.totalCosts    += r.totalCosts;
+      g.profit        += r.profit;
+    });
+
+    $el('awb-count').textContent = `${groups.size} AWBs · ${rows.length} rows`;
+
+    let html = '';
+    let gi = 0;
+    let gtSQ=0, gtST=0, gtAQ=0, gtUT=0, gtAF=0, gtCE=0, gtGF=0, gtFC=0, gtCB=0, gtTC=0, gtPR=0;
+
+    for (const g of groups.values()) {
+      const gm = g.urbnTotal > 0 ? (g.profit / g.urbnTotal * 100) : 0;
+      gtSQ+=g.supQty; gtST+=g.supTotal; gtAQ+=g.anthroQty; gtUT+=g.urbnTotal;
+      gtAF+=g.airfreight; gtCE+=g.customEntry; gtGF+=g.groundFreight;
+      gtFC+=g.fobCommission; gtCB+=g.chargeback; gtTC+=g.totalCosts; gtPR+=g.profit;
+
+      const folder = g.awbFolder
+        ? ` <a class="awb-link" href="${g.awbFolder}" target="_blank" onclick="event.stopPropagation()">↗</a>`
+        : '';
+
+      html += `<tr class="tr-awb" data-gi="${gi}">
+        <td><span class="chevron">▶</span>${g.awb}${folder}</td>
+        <td>${g.supplier || '—'}</td>
+        <td>${fmtN(g.supQty)}</td>
+        <td>${fmt$(g.supTotal)}</td>
+        <td>${fmtN(g.anthroQty)}</td>
+        <td>${fmt$(g.urbnTotal)}</td>
+        <td>${g.airfreight ? fmt$(g.airfreight) : '—'}</td>
+        <td>${g.customEntry ? fmt$(g.customEntry) : '—'}</td>
+        <td>${g.groundFreight ? fmt$(g.groundFreight) : '—'}</td>
+        <td>${g.fobCommission ? fmt$(g.fobCommission) : '—'}</td>
+        <td>${g.chargeback ? fmt$(g.chargeback) : '—'}</td>
+        <td>${fmt$(g.totalCosts)}</td>
+        <td class="${g.profit >= 0 ? 'profit-pos' : 'profit-neg'}">${fmt$(g.profit)}</td>
+        <td>${badge(gm)}</td>
+      </tr>`;
+
+      g.rows.forEach(r => {
+        const rm = r.urbnTotal > 0 ? (r.profit / r.urbnTotal * 100) : 0;
+        html += `<tr class="tr-style" data-gi="${gi}">
+          <td>${r.style || '—'}</td>
+          <td>${r.supplier || '—'}</td>
+          <td>${fmtN(r.supQty)}</td>
+          <td>${fmt$(r.supTotal)}</td>
+          <td>${fmtN(r.anthroQty)}</td>
+          <td>${fmt$(r.urbnTotal)}</td>
+          <td>${r.airfreight ? fmt$(r.airfreight) : '—'}</td>
+          <td>${r.customEntry ? fmt$(r.customEntry) : '—'}</td>
+          <td>${r.groundFreight ? fmt$(r.groundFreight) : '—'}</td>
+          <td>${r.fobCommission ? fmt$(r.fobCommission) : '—'}</td>
+          <td>${r.chargeback ? fmt$(r.chargeback) : '—'}</td>
+          <td>${fmt$(r.totalCosts)}</td>
+          <td class="${r.profit >= 0 ? 'profit-pos' : 'profit-neg'}">${fmt$(r.profit)}</td>
+          <td>${r.urbnTotal ? badge(rm) : '—'}</td>
+        </tr>`;
+      });
+
+      gi++;
+    }
+
+    const gtM = gtUT > 0 ? (gtPR / gtUT * 100) : 0;
+    html += `<tr class="tr-total">
+      <td>Grand Total</td>
+      <td></td>
+      <td>${fmtN(gtSQ)}</td>
+      <td>${fmt$(gtST)}</td>
+      <td>${fmtN(gtAQ)}</td>
+      <td>${fmt$(gtUT)}</td>
+      <td>${gtAF ? fmt$(gtAF) : '—'}</td>
+      <td>${gtCE ? fmt$(gtCE) : '—'}</td>
+      <td>${gtGF ? fmt$(gtGF) : '—'}</td>
+      <td>${gtFC ? fmt$(gtFC) : '—'}</td>
+      <td>${gtCB ? fmt$(gtCB) : '—'}</td>
+      <td>${fmt$(gtTC)}</td>
+      <td class="${gtPR >= 0 ? 'profit-pos' : 'profit-neg'}">${fmt$(gtPR)}</td>
+      <td>${badge(gtM)}</td>
+    </tr>`;
+
+    const tbody = $el('tbl-body');
+    tbody.innerHTML = html;
+
+    tbody.addEventListener('click', e => {
+      const tr = e.target.closest('.tr-awb');
+      if (!tr) return;
+      const idx = tr.dataset.gi;
+      tr.classList.toggle('expanded');
+      tbody.querySelectorAll(`.tr-style[data-gi="${idx}"]`).forEach(s => s.classList.toggle('visible'));
+    }, { once: false });
+  }
+
+  async function load(refresh = false) {
+    const btn = $el('btn-refresh');
+    btn.disabled = true;
+    $el('tbl-body').innerHTML = '<tr><td colspan="14" class="loading">Loading…</td></tr>';
+    try {
+      const data = await fetch('/api/profit-margin' + (refresh ? '?refresh=1' : '')).then(r => r.json());
+      allRows = data.rows || [];
+      populateMonths();
+      render();
+    } catch (e) {
+      $el('tbl-body').innerHTML = `<tr><td colspan="14" class="loading" style="color:#dc2626">Error: ${e.message}</td></tr>`;
+    }
+    btn.disabled = false;
+  }
+
+  $el('f-month').addEventListener('change', render);
+  $el('btn-refresh').addEventListener('click', () => load(true));
+  $el('nav-btn').addEventListener('click', () => $el('nav-panel').classList.toggle('open'));
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.nav-dropdown')) $el('nav-panel').classList.remove('open');
+  });
+
+  load();
+</script>
+</body>
+</html>

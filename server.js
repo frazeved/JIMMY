@@ -250,5 +250,75 @@ app.get('/api/map-overview', async (req, res) => {
   }
 });
 
+// ── PROFIT & MARGIN ───────────────────────────────────────────────────────────
+const _pmCache = { data: null, ts: 0 };
+
+app.get('/api/profit-margin', async (req, res) => {
+  try {
+    if (_pmCache.data && !req.query.refresh && Date.now() - _pmCache.ts < TTL) {
+      return res.json(_pmCache.data);
+    }
+    const sheets  = await getSheets();
+    const mapData = await readTab(sheets, MAP_SHEET_ID, 'ANTHRO MAP 2026');
+    const hm      = buildHMap(mapData[0]);
+
+    const C = {
+      awb:          findCol(hm, 'mawb/hawb', 'mawb', 'hawb'),
+      awbFolder:    findCol(hm, 'awb folder'),
+      supInvoice:   findCol(hm, 'sup invoice #', 'sup invoice#'),
+      style:        findCol(hm, 'style #', 'style#'),
+      supplier:     findCol(hm, 'supplier'),
+      freight:      findCol(hm, 'freight'),
+      supQty:       findCol(hm, 'sup qty'),
+      supUnitCost:  findCol(hm, 'sup unit cost'),
+      supTotal:     findCol(hm, 'sup total invoice'),
+      anthroQty:    findCol(hm, 'anthro invoice qty'),
+      urbnTotal:    findCol(hm, 'urbn invoice total'),
+      airfreight:   findCol(hm, 'airfreight cost'),
+      customEntry:  findCol(hm, 'custom entry cost'),
+      groundFreight:findCol(hm, 'ground freight'),
+      fobCommission:findCol(hm, 'fob commission'),
+      chargeback:   findCol(hm, 'charge back', 'chargeback', 'po balance'),
+      totalCosts:   findCol(hm, 'total costs'),
+      profit:       findCol(hm, 'profit'),
+      profitMargin: findCol(hm, 'profit magin', 'profit margin'),
+      urbnDate:     findCol(hm, 'urbn invoice date'),
+    };
+
+    const rows = mapData.slice(1)
+      .map(row => ({
+        awb:          C.awb          >= 0 ? String(row[C.awb]          || '') : '',
+        awbFolder:    C.awbFolder    >= 0 ? String(row[C.awbFolder]    || '') : '',
+        supInvoice:   C.supInvoice   >= 0 ? String(row[C.supInvoice]   || '') : '',
+        style:        C.style        >= 0 ? String(row[C.style]        || '') : '',
+        supplier:     C.supplier     >= 0 ? String(row[C.supplier]     || '') : '',
+        freight:      C.freight      >= 0 ? String(row[C.freight]      || '') : '',
+        supQty:       C.supQty       >= 0 ? toNum(row[C.supQty])              : 0,
+        supUnitCost:  C.supUnitCost  >= 0 ? toNum(row[C.supUnitCost])         : 0,
+        supTotal:     C.supTotal     >= 0 ? toNum(row[C.supTotal])            : 0,
+        anthroQty:    C.anthroQty    >= 0 ? toNum(row[C.anthroQty])           : 0,
+        urbnTotal:    C.urbnTotal    >= 0 ? toNum(row[C.urbnTotal])           : 0,
+        airfreight:   C.airfreight   >= 0 ? toNum(row[C.airfreight])          : 0,
+        customEntry:  C.customEntry  >= 0 ? toNum(row[C.customEntry])         : 0,
+        groundFreight:C.groundFreight>= 0 ? toNum(row[C.groundFreight])       : 0,
+        fobCommission:C.fobCommission>= 0 ? toNum(row[C.fobCommission])       : 0,
+        chargeback:   C.chargeback   >= 0 ? toNum(row[C.chargeback])          : 0,
+        totalCosts:   C.totalCosts   >= 0 ? toNum(row[C.totalCosts])          : 0,
+        profit:       C.profit       >= 0 ? toNum(row[C.profit])              : 0,
+        profitMargin: C.profitMargin >= 0 ? toNum(row[C.profitMargin])        : 0,
+        urbnDate:     C.urbnDate     >= 0 ? String(row[C.urbnDate]    || '') : '',
+      }))
+      .filter(r => r.style || r.awb);
+
+    const result = { rows };
+    _pmCache.data = result;
+    _pmCache.ts   = Date.now();
+    res.json(result);
+  } catch (e) {
+    console.error('[profit-margin]', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Jimmy running on port ${PORT}`));
