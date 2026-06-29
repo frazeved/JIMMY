@@ -83,6 +83,10 @@
     .awb-link:hover { text-decoration: underline; }
     .loading { text-align: center; padding: 40px; color: var(--text-muted); font-size: 13px; }
 
+    /* clickable style # → opens Style History popup on the main workspace */
+    .pm-style-link { color: var(--accent); text-decoration: none; font-weight: 600; border-bottom: 1px dashed transparent; }
+    .pm-style-link:hover { border-bottom-color: var(--accent); }
+
     @media (max-width: 640px) {
       nav { padding: 0 14px; }
       .page { padding: 14px 12px 40px; }
@@ -279,7 +283,7 @@
       g.rows.forEach(r => {
         const rm = r.urbnTotal > 0 ? (r.profit / r.urbnTotal * 100) : 0;
         html += `<tr class="tr-style" data-gi="${gi}">
-          <td>${r.style || '—'}</td>
+          <td>${r.style ? `<a class="pm-style-link" href="https://workspace305team.onrender.com/?style=${encodeURIComponent(r.style)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="Open Style History">${r.style}</a>` : '—'}</td>
           <td>${r.supplier || '—'}</td>
           <td>${fmtN(r.supQty)}</td>
           <td>${fmt$(r.supTotal)}</td>
